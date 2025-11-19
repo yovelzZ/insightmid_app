@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/score_provider.dart';
+import 'main_nav_page.dart'; // Import untuk navigasi kembali
 
 class ResultPage extends ConsumerWidget {
   const ResultPage({super.key});
@@ -10,94 +11,114 @@ class ResultPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(resultProvider);
-    String recommendation;
-    Color riskColor;
 
+    // Tentukan warna berdasarkan tingkat risiko untuk visual interaktif (Dark Mode Friendly)
+    Color riskColor;
     switch (result.riskLevel) {
       case 'Tinggi':
-        recommendation =
-            'Pertimbangkan berbicara dengan konselor/psikolog.';
-        riskColor = Colors.red.shade700;
+        riskColor = Colors.redAccent.shade200; // Lebih cerah untuk Dark Mode
         break;
       case 'Sedang':
-        recommendation =
-            'Lakukan aktivitas relaksasi (napas dalam, olahraga ringan), atur waktu, dan evaluasi beban kuliah/kerja.';
-        riskColor = Colors.orange.shade700;
+        riskColor = Colors.orangeAccent.shade200; // Lebih cerah untuk Dark Mode
         break;
+      case 'Rendah':
       default:
-        recommendation =
-            'Pertahankan kebiasaan baik. Jaga tidur, makan, dan olahraga.';
-        riskColor = Colors.green.shade700;
+        riskColor = Colors.greenAccent.shade200; // Lebih cerah untuk Dark Mode
+        break;
     }
+
+    // Tentukan warna untuk teks saran dan disclaimer
+    final Color suggestionTextColor = Theme.of(context).textTheme.bodyMedium!.color!.withOpacity(0.8);
+    final Color disclaimerTextColor = Theme.of(context).textTheme.bodySmall!.color!.withOpacity(0.6);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hasil Screening'),
-        // Hapus warna, biarkan tema yang atur
-      ),
-      // --- TAMBAHKAN LATAR BELAKANG GRADASI ---
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white,
-              Colors.teal.shade50,
-            ],
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Kembali ke MainNavPage (home) dan kosongkan stack
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavPage()),
+              (Route<dynamic> route) => false,
+            );
+          },
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Skor Anda:',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                Text(
-                  '${result.score}',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+      ),
+      // MENGHAPUS Container/BoxDecoration Gradien yang membuat warna tabrakan
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Skor Anda:',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.7), 
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      result.score.toString(),
+                      style: const TextStyle(
+                        fontSize: 80,
                         fontWeight: FontWeight.bold,
-                        color: riskColor,
+                        color: Colors.tealAccent, // Warna yang sangat menonjol di Dark Mode
                       ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Tingkat Risiko: ${result.riskLevel}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: riskColor,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Tingkat Risiko: ${result.riskLevel}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: riskColor, // Warna dinamis sesuai risiko
                       ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Menggunakan field suggestion dari usecase
+                    Text(
+                      result.suggestion, 
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: suggestionTextColor, // Warna teks saran
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
-                Text(
-                  recommendation,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const Spacer(),
-                Container(
+              ),
+              // Disclaimer di bagian paling bawah
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    // Menggunakan warna Card Theme yang sudah diatur gelap di src/app.dart
+                    color: Theme.of(context).cardColor, 
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Disclaimer: InsightMind bersifat edukatif, bukan alat diagnosis medis.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
+                      fontSize: 12,
                       fontStyle: FontStyle.italic,
-                      color: Colors.black54,
+                      color: disclaimerTextColor, // Warna teks disclaimer
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
